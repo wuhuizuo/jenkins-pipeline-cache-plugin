@@ -59,7 +59,7 @@ public class BackupCallable extends AbstractMasterToAgentS3Callable {
 
         // do backup
         long start = System.nanoTime();
-        FilePath tmp = new FilePath(File.createTempFile(String.format("cache-item-%s-%d", key, start), null));
+        FilePath tmp = new FilePath(File.createTempFile(String.format("cache-item-%d-", start), null));
         try (OutputStream outToTmp = tmp.write()) {
             // create tar archive locally
             new FilePath(path).tar(outToTmp, new DirScanner.Glob(includes, excludes, false));

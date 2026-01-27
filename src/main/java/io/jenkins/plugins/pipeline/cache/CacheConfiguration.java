@@ -123,7 +123,13 @@ public class CacheConfiguration extends GlobalConfiguration implements Serializa
         Objects.requireNonNull(Jenkins.get()).checkPermission(Jenkins.ADMINISTER);
 
         try {
-            CacheItemRepository repo = new CacheItemRepository(username, password, region, endpoint, bucket);
+            CacheItemRepository repo = new CacheItemRepository(
+                    username,
+                    password == null ? "" : password,
+                    region,
+                    endpoint,
+                    bucket
+            );
 
             if (repo.bucketExists()) {
                 return FormValidation.ok("OK");

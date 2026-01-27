@@ -86,6 +86,24 @@ public class CacheStepTest {
     }
 
     @Test
+    public void testKeyWithSlash() throws Exception {
+        // GIVEN
+        WorkflowJob p = createWorkflow("node {\n" +
+                "  cache(path: '.', key: 'cache/path') {\n" +
+                "    sh 'echo expected-content > file'\n" +
+                "  }\n" +
+                "}");
+
+        // WHEN
+        WorkflowRun b = executeWorkflow(p);
+
+        // THEN
+        j.assertBuildStatusSuccess(b);
+        j.assertLogContains("Cache not restored (no such key found)", b);
+        j.assertLogContains("Cache saved successfully (cache/path)", b);
+    }
+
+    @Test
     public void testBackupIsSkippedOnError() throws Exception {
         // GIVEN
         WorkflowJob p = createWorkflow("node {\n" +

@@ -39,11 +39,15 @@ public class CacheItemRepository {
     }
 
     protected AmazonS3 createS3Client(String username, String password, String endpoint, String region) {
-        return AmazonS3ClientBuilder
-                .standard()
-                .withPathStyleAccessEnabled(false)
+        AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard();
+        if (endpoint != null && !endpoint.isEmpty()) {
+            builder.withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endpoint, region))
+                    .withPathStyleAccessEnabled(true);
+        } else {
+            builder.withRegion(region);
+        }
+        return builder
                 .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(username, password)))
-                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endpoint, region))
                 .build();
     }
 

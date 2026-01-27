@@ -19,7 +19,7 @@ public class MinioContainer extends GenericContainer<MinioContainer> {
 
         withEnv("MINIO_ROOT_USER", UUID.randomUUID().toString());
         withEnv("MINIO_ROOT_PASSWORD", UUID.randomUUID().toString());
-        withCommand("server /data");
+        withCommand("server /data --console-address :9001");
         withExposedPorts(9000);
         withNetwork(Network.newNetwork());  // we need a dedicated network otherwise mc cannot participate
     }
