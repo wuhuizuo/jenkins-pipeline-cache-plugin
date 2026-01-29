@@ -114,7 +114,14 @@ public class CacheStep extends Step implements Serializable {
             FilePath path = workspace.child(step.path);
 
             // restore existing cache
-            path.act(new RestoreCallable(config, step.key, step.restoreKeys)).printInfos(logger);
+            try {
+                path.act(new RestoreCallable(config, step.key, step.restoreKeys)).printInfos(logger);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                logger.println("Cache restore interrupted (will continue without cache): " + e.getMessage());
+            } catch (Exception e) {
+                logger.println("Cache restore failed (non-critical): " + e.getMessage());
+            }
 
             // execute inner-step and save cache afterwards
             getContext().newBodyInvoker().withCallback(new BodyExecutionCallback() {
@@ -122,8 +129,15 @@ public class CacheStep extends Step implements Serializable {
                 public void onSuccess(StepContext context, Object result) {
                     try {
                         path.act(new BackupCallable(config, step.key, step.includes, step.excludes)).printInfos(logger);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        logger.println("Cache save interrupted (skipping cache write): " + e.getMessage());
+                        context.onSuccess(result);
+                        return; 
                     } catch (Exception x) {
-                        context.onFailure(x);
+                        logger.println("Cache save failed (non-critical): " + x.getMessage());
+                        x.printStackTrace(logger);
+                        context.onSuccess(result);
                         return;
                     }
                     context.onSuccess(result);

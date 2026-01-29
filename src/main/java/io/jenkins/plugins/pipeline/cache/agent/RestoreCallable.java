@@ -47,7 +47,17 @@ public class RestoreCallable extends AbstractMasterToAgentS3Callable {
         long startNanoTime = System.nanoTime();
         try (S3Object s3Object = cacheItemRepository().getS3Object(key);
              InputStream is = s3Object.getObjectContent()) {
-            new FilePath(path).untarFrom(is, FilePath.TarCompression.NONE);
+            try {
+                new FilePath(path).untarFrom(is, FilePath.TarCompression.NONE);
+            } catch (IOException e) {
+                // Cache miss, pipeline uninterrupted
+                return new ResultBuilder()
+                        .withInfo(format(
+                            "Cache not restored (%s, I/O error while reading from S3: %s)",
+                            key, e.getMessage()))
+                        .build();
+            }
+
         }
 
         // update last access timestamp
