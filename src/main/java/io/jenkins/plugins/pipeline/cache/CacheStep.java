@@ -3,6 +3,7 @@ package io.jenkins.plugins.pipeline.cache;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 
@@ -64,6 +65,12 @@ public class CacheStep extends Step implements Serializable {
     @DataBoundSetter
     private String excludes;
 
+    /**
+     * (optional) Continue without failing the build if the cache restore fails (default: <i>false</i>).
+     */
+    @DataBoundSetter
+    private boolean ignoreRestoreErrors;
+
     @DataBoundConstructor
     public CacheStep(String path, String key) {
         this.path = path;
@@ -114,7 +121,18 @@ public class CacheStep extends Step implements Serializable {
             FilePath path = workspace.child(step.path);
 
             // restore existing cache
-            path.act(new RestoreCallable(config, step.key, step.restoreKeys)).printInfos(logger);
+            try {
+                path.act(new RestoreCallable(config, step.key, step.restoreKeys)).printInfos(logger);
+            } catch (Exception e) {
+                if (e instanceof InterruptedException) {
+                    throw e;
+                }
+                if (!step.ignoreRestoreErrors) {
+                    throw e;
+                }
+                logger.println("Cache restore failed (ignored) for key " + step.key
+                        + " (restoreKeys=" + formatKeys(step.restoreKeys) + "): " + rootMessage(e));
+            }
 
             // execute inner-step and save cache afterwards
             getContext().newBodyInvoker().withCallback(new BodyExecutionCallback() {
@@ -137,6 +155,21 @@ public class CacheStep extends Step implements Serializable {
             }).start();
 
             return false;
+        }
+
+        private static String formatKeys(String[] restoreKeys) {
+            return restoreKeys == null ? "[]" : Arrays.toString(restoreKeys);
+        }
+
+        private static String rootMessage(Throwable t) {
+            Throwable cur = t;
+            Throwable last = t;
+            while (cur != null) {
+                last = cur;
+                cur = cur.getCause();
+            }
+            String msg = last.getMessage();
+            return msg == null ? last.getClass().getName() : msg;
         }
 
     }
