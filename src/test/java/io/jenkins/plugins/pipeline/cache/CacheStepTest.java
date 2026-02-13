@@ -34,6 +34,8 @@ public class CacheStepTest {
     @ClassRule
     public static BuildWatcher buildWatcher = new BuildWatcher();
 
+    private String bucket;
+
     @BeforeClass
     public static void setupExecutor() throws Exception {
         // execute build jobs on a dedicated agent node
@@ -44,7 +46,7 @@ public class CacheStepTest {
     @Before
     public void setupCache() {
         // GIVEN
-        String bucket = UUID.randomUUID().toString();
+        bucket = UUID.randomUUID().toString();
         mc.createBucket(bucket);
 
         // GIVEN
@@ -164,6 +166,27 @@ public class CacheStepTest {
         j.assertBuildStatusSuccess(b);
         j.assertLogContains("Cache not restored (no such key found)", b);
         j.assertLogContains("Cache saved successfully (cache-b)", b);
+    }
+
+    @Test
+    public void testRestoreFailureIgnored() throws Exception {
+        // GIVEN: store a corrupted cache object
+        String key = "bad-cache";
+        mc.execSecure("printf 'not-a-tar' | mc pipe test-minio/%s/%s", bucket, key);
+
+        WorkflowJob p = createWorkflow("node {\n" +
+                "  cache(path: '.', key: '" + key + "', ignoreRestoreErrors: true) {\n" +
+                "    sh 'echo ok > file && cat file'\n" +
+                "  }\n" +
+                "}");
+
+        // WHEN
+        WorkflowRun b = executeWorkflow(p);
+
+        // THEN
+        j.assertBuildStatusSuccess(b);
+        j.assertLogContains("Cache restore failed (ignored)", b);
+        j.assertLogContains("ok", b);
     }
 
     @Test

@@ -54,6 +54,7 @@ Below you can find a complete list of the `cache` step parameters:
 | restoreKeys |          | Additional keys which are used when the cache gets restored. The plugin tries to resolve them in the defined order (`key` first then the `restoreKeys`) and in case this was not successful then the latest key with the same prefix gets restored. |                             | `['maven-', 'petclinic-']` - restore the latest cache where the key starts with `maven-` or `petclinic-` if the `key` not exists |
 | includes    |          | Ant-style pattern applied to the `path` to filter the files which are included.                                                                                                                                                                     | `**/*` - includes all files | `**/*.xml` or `**/*.xml,**/*.html` see [here](https://ant.apache.org/manual/dirtasks.html) for more details                      |
 | excludes    |          | Ant-style pattern applied to the `path` to filter the files which are excluded.                                                                                                                                                                     | Excludes no files           | see `includes`                                                                                                                   |
+| ignoreRestoreErrors |  | Continue without failing the build if the cache restore fails.                                                                                                                                                                                       | `false`                     | `true`                                                                                                                           |
 
 # Storage providers
 Any S3 compatible storage provider should work. MinIO is supported first class, because all the integration tests are executed against MinIO.
@@ -82,6 +83,7 @@ As a general advice, sensitive data or data which cannot be restored from somewh
 * the S3 object contains metadata
   * CREATED - Unix time is ms when the cache was created
   * LAST_ACCESS - Unix time is ms when the cache was accessed last
+* if `ignoreRestoreErrors` is `true` and a cache object is corrupted, the build continues but the existing cache is not overwritten (delete the cache key to force a rebuild)
 
 # Further reading
 * [CacheStep.java](./src/main/java/io/jenkins/plugins/pipeline/cache/CacheStep.java) - implements the `cache` pipeline step
