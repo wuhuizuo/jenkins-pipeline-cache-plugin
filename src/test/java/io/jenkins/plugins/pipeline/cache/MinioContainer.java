@@ -9,7 +9,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
 public class MinioContainer extends GenericContainer<MinioContainer> {
 
     public MinioContainer() {
-        this("minio/minio");
+        this("minio/minio:RELEASE.2025-07-23T15-54-02Z");
     }
 
     public MinioContainer(String dockerImageName) {
