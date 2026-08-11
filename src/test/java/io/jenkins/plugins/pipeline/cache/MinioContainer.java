@@ -19,6 +19,9 @@ public class MinioContainer extends GenericContainer<MinioContainer> {
 
         withEnv("MINIO_ROOT_USER", UUID.randomUUID().toString());
         withEnv("MINIO_ROOT_PASSWORD", UUID.randomUUID().toString());
+        // the plugin uses virtual-hosted-style requests (path-style disabled); MinIO only enables
+        // virtual-host style for the domains listed in MINIO_DOMAIN
+        withEnv("MINIO_DOMAIN", "localhost");
         withCommand("server /data");
         withExposedPorts(9000);
         withNetwork(Network.newNetwork());  // we need a dedicated network otherwise mc cannot participate
