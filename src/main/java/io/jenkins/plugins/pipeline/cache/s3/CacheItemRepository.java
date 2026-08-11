@@ -26,8 +26,11 @@ import com.amazonaws.services.s3.model.S3ObjectSummary;
 
 public class CacheItemRepository {
 
-    static final String LAST_ACCESS = "LAST_ACCESS";
-    static final String CREATION = "CREATION";
+    // Note: keys are stored lowercase as user metadata ("x-amz-meta-*") headers. Tencent COS rejects
+    // user metadata keys starting with "last_access" (underscore) with SignatureDoesNotMatch, so the
+    // last-access key must not use an underscore.
+    static final String LAST_ACCESS = "last-access";
+    static final String CREATION = "creation";
     private static final long TIME_THRESHOLD = 5 * 60 * 1000L; // 5 minutes
 
     private final AmazonS3 s3;
@@ -42,6 +45,10 @@ public class CacheItemRepository {
         return AmazonS3ClientBuilder
                 .standard()
                 .withPathStyleAccessEnabled(false)
+                // Explicit payload signing + plain (non-chunked) body: matches the request shape that
+                // AWS CLI/boto3 send to COS and is deterministic regardless of the runtime SDK version.
+                .withPayloadSigningEnabled(true)
+                .disableChunkedEncoding()
                 .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(username, password)))
                 .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endpoint, region))
                 .build();
