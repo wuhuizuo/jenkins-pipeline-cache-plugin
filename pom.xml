@@ -10,7 +10,7 @@
 
     <groupId>com.github.j3t</groupId>
     <artifactId>jenkins-pipeline-cache</artifactId>
-    <version>0.2.2-SNAPSHOT</version>
+    <version>0.2.3</version>
     <packaging>hpi</packaging>
 
     <properties>
